@@ -38,25 +38,64 @@ class GameOfLife(object):
     def make_video(self, video_filename: str):
         pass
 #parsing configpath file
-    def read_config_file(self, configpath: str):
-        """Template version of read_config_file(). This is not a valid solution for ex10."""
-        state = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-                          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-                          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-                          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                          [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
-        n_iterations = 10
-        dead_symbol = '-'
-        live_symbol = 'o'
-        return n_iterations, dead_symbol, live_symbol, state
+def read_config_file(configpath: str):
+    matches = ['n_iterations:', 'dead_symbol:', 'live_symbol:','init_state:']
+    folderpath = 'ex10_testfiles/valid_04.config'
+    isit = False
+    slice_state = []
+    i = 0
+    a = 0
+    b = 0
+    with open(configpath, 'r') as f:
+        file_content = f.read()
+        if not all(x in file_content for x in matches):
+            raise AttributeError(f"AttributeError")
+        #n_iterations
+        n_iterations = re.findall(r'n_iterations: (\S+)', file_content)[0]
+        try:
+            int(n_iterations)
+        except ValueError:
+            isit = True
+        if isit == True:
+            raise AttributeError(f"AttributeError")
+        #dead_symbol
+        dead_symbol = re.findall(r'dead_symbol: (\S+)', file_content)[0]
+        if len(dead_symbol) != 3:
+            raise AttributeError(f"AttributeError")
+        dead_symbol = dead_symbol.replace('"','')
+        if not len(dead_symbol) == 1:
+            raise AttributeError(f"AttributeError")
+        #live_symbol
+        live_symbol = re.findall(r'live_symbol: (\S+)', file_content)[0]
+        if len(live_symbol) != 3:
+            raise AttributeError(f"AttributeError")
+        live_symbol = live_symbol.replace('"','')
+        if not len(live_symbol) == 1:
+            raise AttributeError(f"AttributeError")
+        #init_state
+        file_content_split = file_content.splitlines()
+        for x in file_content_split:
+            if x == '"':
+                quota_index = file_content.index(x)
+                slice_state.append(i)
+            i = i + 1
+        some_slice = slice(slice_state[0]+1,slice_state[1])
+        init_state = file_content_split[some_slice]
+        init_state_boolean = np.zeros(shape=(slice_state[1]-slice_state[0]-1,len(init_state[0])), dtype=np.int32)
+        for x in init_state:
+            if len(x) != len(init_state[0]):
+                raise ValueError(f"ValueError")
+        for x in init_state:
+            for c in x:
+                if not c == live_symbol and not c == dead_symbol:
+                    raise ValueError(f"ValueError")
+                if a == len(init_state[0]):
+                    a = 0
+                    b = b + 1
+                if c == live_symbol:
+                    init_state_boolean[b][a] = 1
+                a = a + 1
+        return (int(n_iterations),dead_symbol,live_symbol,init_state_boolean)
 
     def step(self):
         """Compute the next tick of the simulator and return current number of iteration.
@@ -70,7 +109,6 @@ class GameOfLife(object):
         return self.current_iteration
 #computing the next step from previous step
     def __get_next_state__(self, state: np.ndarray):
-        """Template version of __compute_next_state__(). This is not a valid solution for ex11."""
         temp_state_1 = np.array(
             [[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
              [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
